@@ -21,7 +21,7 @@ fmt-commands *args:
     rg --files --type c | map printf 'clang-format {{args}} "%s"\n'
 
 fmt-args *args: link-clang-format-style
-    just fmt-comamnds {{args}} | just parallel-bash
+    just fmt-commands {{args}} | just parallel-bash
 
 fmt: (fmt-args "-i")
 
