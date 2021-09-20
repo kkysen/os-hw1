@@ -17,4 +17,4 @@ module_exit(tasklist_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Tasklist Module");
-MODULE_AUTHOR("SGG");
+MODULE_AUTHOR("ks3343");

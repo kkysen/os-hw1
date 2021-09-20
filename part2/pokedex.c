@@ -58,4 +58,4 @@ module_exit(pokedex_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("A handy Pokedex module");
-MODULE_AUTHOR("SGG");
+MODULE_AUTHOR("ks3343");
