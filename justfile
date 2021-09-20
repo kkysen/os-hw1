@@ -1,19 +1,27 @@
 set shell := ["bash", "-c"]
 
+n_proc := `nproc`
+
 default:
     just --list
 
 parallel-bash:
     printf '%s\nwait' "$(map printf '%s &\n')" | bash
 
+make-commands *args:
+    fd '^Makefile$' --exec-batch dirname | map printf '(cd "%s" && make -j{{n_proc}} {{args}})\n'
+
 make *args:
-    fd '^Makefile$' --exec-batch dirname | map printf '(cd "%s" && make {{args}})\n' | just parallel-bash
+    just make-commands {{args}} | just parallel-bash
 
 link-clang-format-style:
     ln --force ../linux/.clang-format .
 
+fmt-commands *args:
+    rg --files --type c | map printf 'clang-format {{args}} "%s"\n'
+
 fmt-args *args: link-clang-format-style
-    rg --files --type c | map printf 'clang-format {{args}} "%s"\n' | just parallel-bash
+    just fmt-comamnds {{args}} | just parallel-bash
 
 fmt: (fmt-args "-i")
 
