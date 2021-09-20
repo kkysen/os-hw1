@@ -53,8 +53,8 @@ void pokedex_exit(void)
 	delete_pokedex();
 }
 
-module_init( pokedex_init );
-module_exit( pokedex_exit );
+module_init(pokedex_init);
+module_exit(pokedex_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("A handy Pokedex module");

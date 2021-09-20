@@ -68,8 +68,8 @@ void pokedex_nom_exit(void)
 	delete_pokedex();
 }
 
-module_init( pokedex_nom_init );
-module_exit( pokedex_nom_exit );
+module_init(pokedex_nom_init);
+module_exit(pokedex_nom_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("A handy Pokedex module, without list macros");

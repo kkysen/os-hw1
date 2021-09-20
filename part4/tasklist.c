@@ -12,8 +12,8 @@ void tasklist_exit(void)
 	printk(KERN_INFO "Removing Module\n");
 }
 
-module_init( tasklist_init );
-module_exit( tasklist_exit );
+module_init(tasklist_init);
+module_exit(tasklist_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Tasklist Module");
