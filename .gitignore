@@ -1,0 +1,11 @@
+# Build products
+*.o
+*.o.*
+*.ko
+*.mod.c
+modules.order
+Module.symvers
+
+# Common editor swap files
+.*.swp
+*~
