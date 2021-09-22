@@ -37,15 +37,12 @@ struct pokemon *alloc_pokemon(const char *const name, const int dex_no)
 
 void add_pokemon(char *name, int dex_no)
 {
-	printk(KERN_INFO "add_pokemon\n");
 	struct pokemon *const pokemon = alloc_pokemon(name, dex_no);
-	print_pokemon(pokemon);
 	list_add_tail(&pokemon->list, &pokedex);
 }
 
 void print_pokedex(void)
 {
-	printk(KERN_INFO "print_pokedex\n");
 	struct pokemon *pokemon;
 	list_for_each_entry (pokemon, &pokedex, list) {
 		print_pokemon(pokemon);
@@ -54,7 +51,6 @@ void print_pokedex(void)
 
 void delete_pokedex(void)
 {
-	printk(KERN_INFO "delete_pokedex\n");
 	struct pokemon *pokemon;
 	struct pokemon *tmp;
 	list_for_each_entry_safe (pokemon, tmp, &pokedex, list) {
