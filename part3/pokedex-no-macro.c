@@ -1,5 +1,6 @@
 #include <linux/module.h>
 #include <linux/printk.h>
+#include <linux/slab.h>
 
 /*
  * Undefine commonly used macros -- DO NOT MODIFY
@@ -16,7 +17,6 @@
 #undef offsetof
 #undef READ_ONCE
 #undef WRITE_ONCE
-
 struct pokemon {
 	char name[32];
 	int dex_no;
@@ -28,21 +28,127 @@ void print_pokemon(struct pokemon *p)
 	printk(KERN_INFO "%s: National Dex No. #%d\n", p->name, p->dex_no);
 }
 
-/* TODO: declare a single static struct list_head, named pokedex */
+static struct list_head pokedex = {
+	.next = &pokedex,
+	.prev = &pokedex,
+};
+
+struct pokemon new_pokemon(const char *const name, const int dex_no)
+{
+	struct pokemon this = {
+		.name = { 0 },
+		.dex_no = dex_no,
+		.list = {
+			.next = &this.list,
+			.prev = &this.list,
+		},
+	};
+	strncpy(this.name, name, sizeof(this.name) - 1);
+	return this;
+}
+
+struct pokemon *alloc_pokemon(const char *const name, const int dex_no)
+{
+	struct pokemon *const this = kmalloc(sizeof(*this), GFP_KERNEL);
+	*this = new_pokemon(name, dex_no);
+	return this;
+}
 
 void add_pokemon(char *name, int dex_no)
 {
-	/* TODO: write your code here */
+	struct pokemon *const pokemon = alloc_pokemon(name, dex_no);
+	// list_add_tail(&pokemon->list, &pokedex);
+	struct list_head *new = &pokemon->list;
+	struct list_head *head = &pokedex;
+	// __list_add(new, head->prev, head);
+	// struct list_head *new = new;
+	struct list_head *prev = head->prev;
+	struct list_head *next = head;
+	// if (!__list_add_valid(new, prev, next))
+	// 	return;
+
+	next->prev = new;
+	new->next = next;
+	new->prev = prev;
+	// WRITE_ONCE(prev->next, new);
+	// compiletime_assert_rwonce_type(prev->next);
+	// *(volatile typeof(prev->next) *)&(prev->next) = (new);
+	struct list_head *volatile *prev_next_ptr = &prev->next;
+	*prev_next_ptr = new;
 }
 
 void print_pokedex(void)
 {
-	/* TODO: write your code here, using print_pokemon() */
+	struct pokemon *pokemon;
+	// list_for_each_entry (pokemon, &pokedex, list) {
+	// 	print_pokemon(pokemon);
+	// }
+	for (pokemon = ({
+		     void *__mptr = (void *)((&pokedex)->next);
+		     ((typeof(*pokemon) *)(__mptr -
+					   __builtin_offsetof(typeof(*pokemon),
+							      list)));
+	     });
+	     !(&pokemon->list == (&pokedex));
+	     pokemon = ({
+		     void *__mptr = (void *)((pokemon)->list.next);
+		     ((typeof(*(pokemon)) *)(__mptr -
+					     __builtin_offsetof(
+						     typeof(*(pokemon)),
+						     list)));
+	     })) {
+		print_pokemon(pokemon);
+	}
 }
 
 void delete_pokedex(void)
 {
-	/* TODO: write your code here */
+	struct pokemon *pokemon;
+	struct pokemon *tmp;
+	// list_for_each_entry_safe (pokemon, tmp, &pokedex, list) {
+	// 	list_del(&pokemon->list);
+	// 	kfree(pokemon);
+	// }
+	for (pokemon = ({
+		     void *__mptr = (void *)((&pokedex)->next);
+		     ((typeof(*pokemon) *)(__mptr -
+					   __builtin_offsetof(typeof(*pokemon),
+							      list)));
+	     }),
+	    tmp = ({
+		    void *__mptr = (void *)((pokemon)->list.next);
+		    ((typeof(*(pokemon)) *)(__mptr -
+					    __builtin_offsetof(
+						    typeof(*(pokemon)), list)));
+	    });
+	     !(&pokemon->list == (&pokedex)); pokemon = tmp,
+	    tmp = ({
+		    void *__mptr = (void *)((tmp)->list.next);
+		    ((typeof(*(tmp)) *)(__mptr -
+					__builtin_offsetof(typeof(*(tmp)),
+							   list)));
+	    })) {
+		// list_del(&pokemon->list);
+		struct list_head *entry = &pokemon->list;
+		// __list_del_entry(entry);
+		// struct list_head *entry = entry;
+		// if (!__list_del_entry_valid(entry))
+		// 	return;
+		__list_del(entry->prev, entry->next);
+		struct list_head *prev = entry->prev;
+		struct list_head *next = entry->next;
+		next->prev = prev;
+		// WRITE_ONCE(prev->next, next);
+		// compiletime_assert_rwonce_type(prev->next);
+		// *(volatile typeof(prev->next) *)&(prev->next) = (next);
+		struct list_head *volatile *prev_next_ptr = &prev->next;
+		*prev_next_ptr = next;
+		// entry->next = LIST_POISON1;
+		// entry->prev = LIST_POISON2;
+		entry->next = (void *)0x100;
+		entry->prev = (void *)0x122;
+		kfree(pokemon);
+	}
 }
 
 int pokedex_nom_init(void)
