@@ -1,7 +1,9 @@
 #include <linux/module.h>
 #include <linux/list.h>
 #include <linux/printk.h>
-
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
 struct pokemon {
 	char name[32];
 	int dex_no;
@@ -13,21 +15,52 @@ void print_pokemon(struct pokemon *p)
 	printk(KERN_INFO "%s: National Dex No. #%d\n", p->name, p->dex_no);
 }
 
-/* TODO: declare a single static struct list_head, named pokedex */
+static LIST_HEAD(pokedex);
+
+struct pokemon new_pokemon(const char *const name, const int dex_no)
+{
+	struct pokemon this = {
+		.name = { 0 },
+		.dex_no = dex_no,
+		.list = LIST_HEAD_INIT(this.list),
+	};
+	strncpy(this.name, name, sizeof(this.name) - 1);
+	return this;
+}
+
+struct pokemon *alloc_pokemon(const char *const name, const int dex_no)
+{
+	struct pokemon *const this = kmalloc(sizeof(*this), GFP_KERNEL);
+	*this = new_pokemon(name, dex_no);
+	return this;
+}
 
 void add_pokemon(char *name, int dex_no)
 {
-	/* TODO: write your code here */
+	printk(KERN_INFO "add_pokemon\n");
+	struct pokemon *const pokemon = alloc_pokemon(name, dex_no);
+	print_pokemon(pokemon);
+	list_add_tail(&pokemon->list, &pokedex);
 }
 
 void print_pokedex(void)
 {
-	/* TODO: write your code here, using print_pokemon() */
+	printk(KERN_INFO "print_pokedex\n");
+	struct pokemon *pokemon;
+	list_for_each_entry (pokemon, &pokedex, list) {
+		print_pokemon(pokemon);
+	}
 }
 
 void delete_pokedex(void)
 {
-	/* TODO: write your code here */
+	printk(KERN_INFO "delete_pokedex\n");
+	struct pokemon *pokemon;
+	struct pokemon *tmp;
+	list_for_each_entry_safe (pokemon, tmp, &pokedex, list) {
+		list_del(&pokemon->list);
+		kfree(pokemon);
+	}
 }
 
 int pokedex_init(void)
