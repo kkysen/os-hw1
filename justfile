@@ -7,7 +7,7 @@ default:
     just --list
 
 parallel-bash:
-    printf '%s\nwait' "$(map printf '%s &\n')" | bash
+    (map printf '%s &\n'; echo wait) | bash
 
 list-parts:
     fd '^Makefile$' --exec-batch dirname
@@ -36,7 +36,7 @@ gitui: fmt
     GIT_EDITOR=nano gitui
 
 log *args:
-    sudo dmesg --kernel {{args}}
+    sudo dmesg --kernel --reltime {{args}}
 
 log-watch *args: (log "--follow-new" args)
 
@@ -48,12 +48,15 @@ ll *args:
 run-mod-priv part:
     #!/usr/bin/env bash
     cd "{{part}}"
+    just log | wc -l > log.length
     kedr start *.ko
     echo "running $(tput setaf 2){{part}}$(tput sgr 0):"
     insmod *.ko
     rmmod *.ko
+    just log --color=always | tail -n "+$(($(cat log.length) + 1))"
+    rm log.length
     cd /sys/kernel/debug/kedr_leak_check
-    bat info possible_leaks unallocated_frees
+    bat --paging never info possible_leaks unallocated_frees
     kedr stop
 
 run-mod-only part:
