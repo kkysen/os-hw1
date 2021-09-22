@@ -69,3 +69,6 @@ archive:
     #!/usr/bin/env bash
     dir="${PWD##*/}"
     cd .. && tar cfz "${dir}-{{uni}}.tgz" "${dir}"
+
+compile-commands: (make "clean")
+    bear -- just make

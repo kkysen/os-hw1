@@ -3,15 +3,14 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
-                "/usr/src/linux-headers-5.10.0-8-common/include/**",
-                "/usr/src/linux-headers-5.10.0-8-common/arch/alpha/include/**"
+                "${workspaceFolder}/**"
             ],
             "defines": [],
             "compilerPath": "/home/khyber/work/bin/gcc",
             "cStandard": "c17",
             "cppStandard": "c++20",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "linux-gcc-x64",
+            "compileCommands": "${workspaceFolder}/compile_commands.json"
         }
     ],
     "version": 4

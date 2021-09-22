@@ -1,6 +1,18 @@
 {
     "files.associations": {
         "list.h": "c",
-        "printk.h": "c"
+        "printk.h": "c",
+        "slab.h": "c",
+        "gfp.h": "c",
+        "mmzone.h": "c",
+        "spinlock.h": "c",
+        "mm_types.h": "c",
+        "workqueue.h": "c",
+        "timer.h": "c",
+        "ktime.h": "c",
+        "time.h": "c",
+        "jiffies.h": "c",
+        "kernel.h": "c",
+        "string.h": "c"
     }
 }
