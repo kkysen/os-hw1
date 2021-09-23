@@ -23,6 +23,8 @@ struct pokemon {
 	struct list_head list;
 };
 
+const size_t offset = (size_t) & ((struct pokemon *)NULL)->list;
+
 void print_pokemon(struct pokemon *p)
 {
 	printk(KERN_INFO "%s: National Dex No. #%d\n", p->name, p->dex_no);
@@ -83,20 +85,10 @@ void print_pokedex(void)
 	// list_for_each_entry (pokemon, &pokedex, list) {
 	// 	print_pokemon(pokemon);
 	// }
-	for (pokemon = ({
-		     void *__mptr = (void *)((&pokedex)->next);
-		     ((typeof(*pokemon) *)(__mptr -
-					   __builtin_offsetof(typeof(*pokemon),
-							      list)));
-	     });
-	     !(&pokemon->list == (&pokedex));
-	     pokemon = ({
-		     void *__mptr = (void *)((pokemon)->list.next);
-		     ((typeof(*(pokemon)) *)(__mptr -
-					     __builtin_offsetof(
-						     typeof(*(pokemon)),
-						     list)));
-	     })) {
+	for (pokemon = (struct pokemon *)((void *)pokedex.next - offset);
+	     &pokemon->list != &pokedex;
+	     pokemon =
+		     (struct pokemon *)((void *)pokemon->list.next - offset)) {
 		print_pokemon(pokemon);
 	}
 }
@@ -105,36 +97,17 @@ void delete_pokedex(void)
 {
 	struct pokemon *pokemon;
 	struct pokemon *tmp;
-	// list_for_each_entry_safe (pokemon, tmp, &pokedex, list) {
-	// 	list_del(&pokemon->list);
-	// 	kfree(pokemon);
-	// }
-	for (pokemon = ({
-		     void *__mptr = (void *)((&pokedex)->next);
-		     ((typeof(*pokemon) *)(__mptr -
-					   __builtin_offsetof(typeof(*pokemon),
-							      list)));
-	     }),
-	    tmp = ({
-		    void *__mptr = (void *)((pokemon)->list.next);
-		    ((typeof(*(pokemon)) *)(__mptr -
-					    __builtin_offsetof(
-						    typeof(*(pokemon)), list)));
-	    });
-	     !(&pokemon->list == (&pokedex)); pokemon = tmp,
-	    tmp = ({
-		    void *__mptr = (void *)((tmp)->list.next);
-		    ((typeof(*(tmp)) *)(__mptr -
-					__builtin_offsetof(typeof(*(tmp)),
-							   list)));
-	    })) {
+	for (pokemon = (struct pokemon *)((void *)pokedex.next - offset),
+	    tmp = (struct pokemon *)((void *)pokemon->list.next - offset);
+	     &pokemon->list != &pokedex; pokemon = tmp,
+	    tmp = (struct pokemon *)((void *)tmp->list.next - offset)) {
 		// list_del(&pokemon->list);
 		struct list_head *entry = &pokemon->list;
 		// __list_del_entry(entry);
 		// struct list_head *entry = entry;
 		// if (!__list_del_entry_valid(entry))
 		// 	return;
-		__list_del(entry->prev, entry->next);
+		// __list_del(entry->prev, entry->next);
 		struct list_head *prev = entry->prev;
 		struct list_head *next = entry->next;
 		next->prev = prev;
