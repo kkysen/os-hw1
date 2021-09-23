@@ -37,6 +37,12 @@ static struct list_head pokedex = {
 
 void add_pokemon(char *name, int dex_no)
 {
+	struct pokemon *pokemon_ptr;
+	struct list_head *new;
+	struct list_head *head;
+	struct list_head *prev;
+	struct list_head *next;
+	struct list_head *volatile *prev_next_ptr;
 	struct pokemon pokemon = {
 		.name = { 0 },
 		.dex_no = dex_no,
@@ -46,17 +52,16 @@ void add_pokemon(char *name, int dex_no)
 		},
 	};
 	strncpy(pokemon.name, name, sizeof(pokemon.name) - 1);
-	struct pokemon *const pokemon_ptr =
-		kmalloc(sizeof(*pokemon_ptr), GFP_KERNEL);
+	pokemon_ptr = kmalloc(sizeof(*pokemon_ptr), GFP_KERNEL);
 	*pokemon_ptr = pokemon;
-	struct list_head *new = &pokemon_ptr->list;
-	struct list_head *head = &pokedex;
-	struct list_head *prev = head->prev;
-	struct list_head *next = head;
+	new = &pokemon_ptr->list;
+	head = &pokedex;
+	prev = head->prev;
+	next = head;
 	next->prev = new;
 	new->next = next;
 	new->prev = prev;
-	struct list_head *volatile *prev_next_ptr = &prev->next;
+	prev_next_ptr = &prev->next;
 	*prev_next_ptr = new;
 }
 
@@ -81,8 +86,9 @@ void delete_pokedex(void)
 		struct list_head *entry = &pokemon->list;
 		struct list_head *prev = entry->prev;
 		struct list_head *next = entry->next;
+		struct list_head *volatile *prev_next_ptr;
 		next->prev = prev;
-		struct list_head *volatile *prev_next_ptr = &prev->next;
+		prev_next_ptr = &prev->next;
 		*prev_next_ptr = next;
 		entry->next = (void *)0x100;
 		entry->prev = (void *)0x122;
