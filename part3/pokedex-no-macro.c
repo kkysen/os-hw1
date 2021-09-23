@@ -85,10 +85,9 @@ void print_pokedex(void)
 	// list_for_each_entry (pokemon, &pokedex, list) {
 	// 	print_pokemon(pokemon);
 	// }
-	for (pokemon = (struct pokemon *)((void *)pokedex.next - offset);
+	for (pokemon = (void *)pokedex.next - offset;
 	     &pokemon->list != &pokedex;
-	     pokemon =
-		     (struct pokemon *)((void *)pokemon->list.next - offset)) {
+	     pokemon = (void *)pokemon->list.next - offset) {
 		print_pokemon(pokemon);
 	}
 }
@@ -97,10 +96,10 @@ void delete_pokedex(void)
 {
 	struct pokemon *pokemon;
 	struct pokemon *tmp;
-	for (pokemon = (struct pokemon *)((void *)pokedex.next - offset),
-	    tmp = (struct pokemon *)((void *)pokemon->list.next - offset);
-	     &pokemon->list != &pokedex; pokemon = tmp,
-	    tmp = (struct pokemon *)((void *)tmp->list.next - offset)) {
+	for (pokemon = (void *)pokedex.next - offset,
+	    tmp = (void *)pokemon->list.next - offset;
+	     &pokemon->list != &pokedex;
+	     pokemon = tmp, tmp = (void *)tmp->list.next - offset) {
 		// list_del(&pokemon->list);
 		struct list_head *entry = &pokemon->list;
 		// __list_del_entry(entry);
