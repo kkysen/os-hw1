@@ -59,22 +59,13 @@ struct pokemon *alloc_pokemon(const char *const name, const int dex_no)
 void add_pokemon(char *name, int dex_no)
 {
 	struct pokemon *const pokemon = alloc_pokemon(name, dex_no);
-	// list_add_tail(&pokemon->list, &pokedex);
 	struct list_head *new = &pokemon->list;
 	struct list_head *head = &pokedex;
-	// __list_add(new, head->prev, head);
-	// struct list_head *new = new;
 	struct list_head *prev = head->prev;
 	struct list_head *next = head;
-	// if (!__list_add_valid(new, prev, next))
-	// 	return;
-
 	next->prev = new;
 	new->next = next;
 	new->prev = prev;
-	// WRITE_ONCE(prev->next, new);
-	// compiletime_assert_rwonce_type(prev->next);
-	// *(volatile typeof(prev->next) *)&(prev->next) = (new);
 	struct list_head *volatile *prev_next_ptr = &prev->next;
 	*prev_next_ptr = new;
 }
@@ -82,9 +73,6 @@ void add_pokemon(char *name, int dex_no)
 void print_pokedex(void)
 {
 	struct pokemon *pokemon;
-	// list_for_each_entry (pokemon, &pokedex, list) {
-	// 	print_pokemon(pokemon);
-	// }
 	for (pokemon = (void *)pokedex.next - offset;
 	     &pokemon->list != &pokedex;
 	     pokemon = (void *)pokemon->list.next - offset) {
@@ -100,23 +88,12 @@ void delete_pokedex(void)
 	    tmp = (void *)pokemon->list.next - offset;
 	     &pokemon->list != &pokedex;
 	     pokemon = tmp, tmp = (void *)tmp->list.next - offset) {
-		// list_del(&pokemon->list);
 		struct list_head *entry = &pokemon->list;
-		// __list_del_entry(entry);
-		// struct list_head *entry = entry;
-		// if (!__list_del_entry_valid(entry))
-		// 	return;
-		// __list_del(entry->prev, entry->next);
 		struct list_head *prev = entry->prev;
 		struct list_head *next = entry->next;
 		next->prev = prev;
-		// WRITE_ONCE(prev->next, next);
-		// compiletime_assert_rwonce_type(prev->next);
-		// *(volatile typeof(prev->next) *)&(prev->next) = (next);
 		struct list_head *volatile *prev_next_ptr = &prev->next;
 		*prev_next_ptr = next;
-		// entry->next = LIST_POISON1;
-		// entry->prev = LIST_POISON2;
 		entry->next = (void *)0x100;
 		entry->prev = (void *)0x122;
 		kfree(pokemon);
