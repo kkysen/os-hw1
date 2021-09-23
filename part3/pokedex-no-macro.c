@@ -35,31 +35,21 @@ static struct list_head pokedex = {
 	.prev = &pokedex,
 };
 
-struct pokemon new_pokemon(const char *const name, const int dex_no)
+void add_pokemon(char *name, int dex_no)
 {
-	struct pokemon this = {
+	struct pokemon pokemon = {
 		.name = { 0 },
 		.dex_no = dex_no,
 		.list = {
-			.next = &this.list,
-			.prev = &this.list,
+			.next = &pokemon.list,
+			.prev = &pokemon.list,
 		},
 	};
-	strncpy(this.name, name, sizeof(this.name) - 1);
-	return this;
-}
-
-struct pokemon *alloc_pokemon(const char *const name, const int dex_no)
-{
-	struct pokemon *const this = kmalloc(sizeof(*this), GFP_KERNEL);
-	*this = new_pokemon(name, dex_no);
-	return this;
-}
-
-void add_pokemon(char *name, int dex_no)
-{
-	struct pokemon *const pokemon = alloc_pokemon(name, dex_no);
-	struct list_head *new = &pokemon->list;
+	strncpy(pokemon.name, name, sizeof(pokemon.name) - 1);
+	struct pokemon *const pokemon_ptr =
+		kmalloc(sizeof(*pokemon_ptr), GFP_KERNEL);
+	*pokemon_ptr = pokemon;
+	struct list_head *new = &pokemon_ptr->list;
 	struct list_head *head = &pokedex;
 	struct list_head *prev = head->prev;
 	struct list_head *next = head;
