@@ -6,8 +6,12 @@ n_proc := `nproc`
 default:
     just --list
 
+parallel-bash-commands:
+    map printf '%s &\n'
+    echo wait
+
 parallel-bash:
-    (map printf '%s &\n'; echo wait) | bash
+    just parallel-bash-commands | bash
 
 list-parts:
     fd '^Makefile$' --exec-batch dirname
