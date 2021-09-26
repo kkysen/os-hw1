@@ -22,8 +22,10 @@ make-part part *args:
 make-commands *args:
     just list-parts | map printf '(just make-part "%s" {{args}})\n'
 
-make *args:
+make-parts *args:
     just make-commands {{args}} | just parallel-bash
+
+make *args: (make-parts args)
 
 link-clang-format-style:
     ln --force ../linux/.clang-format .
