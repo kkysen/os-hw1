@@ -1,11 +1,23 @@
-Part 1: 
+Part 1:
 Enter your answer in the designated location. Do NOT remove lines that start
 with '=' signs and keep lines to a max of 80 chars long.
 
 ================================== Q1 start ===================================
 1.  What actions does a kernel perform to context switch between processes?
 
-/* your answer */
+During boot time, the kernel initially sets up the trap table for syscalls
+and preemptive timer interrupts.  Then when a user process performs a syscall
+or the hardware sends an interrupt, it saves the user-mode process's registers
+to the kernel stack, enters kernel mode, and runs the kernel's interrupt
+handler.  If the kernel's scheduler then decides to perform a context switch
+to another thread of execution, it has to save the user process's registers
+(that are on the kernel stack) to it's in-memory data structure for that
+process (so that it can be re-loaded next time), restore the saved registers
+for the new process it wants to switch to back to the kernel stack, execute
+the return-from-trap instructure, and then let the hardware switch back to
+user mode and restore the user's registers from the kernel stack,
+which will then have the CPU resume execution from the same program counter,
+stack pointer, and other registers that this process was previously in.
 
 =================================== Q1 end ====================================
 
@@ -14,7 +26,16 @@ with '=' signs and keep lines to a max of 80 chars long.
 2.  What process state does a process enter immediately after it terminates?
     What is this state for, and when does it leave this state?
 
-/* your answer */
+When a process terminates, it initially enters a post-termination or "zombie"
+state, where it is no longer running but some of its important data structures
+are still maintained in the kernel's process list.  Thus, this allows the
+parent process to retrieve things about the now-terminated child process,
+like it's pid and exit status code.  Once the parent process wait()s on its
+child, it will be repead and destroyed for good (no more zombie state).  If,
+however, the parent is already killed as well, then its reaper is not its
+parent but the init process or another registered subrepear process,
+and that repear (usually init) is the one that performs the wait to reap
+the zombie process.
 
 =================================== Q2 end ====================================
 
@@ -23,7 +44,17 @@ with '=' signs and keep lines to a max of 80 chars long.
 3.  What is typeof? Is it a C language keyword, function, or macro? What does
     it do?
 
-/* your answer */
+`typeof` is a GNU extension to the C language.
+It is a keyword similar to C++'s standardized `decltype`,
+but in C and a non-standard GNU extension.
+
+If the argument of typeof is a type, then it just returns that type.
+Normally, though, the argument is an expression, in which case
+`typeof` returns the type of that expression.
+
+Usually the expression is not actually evaluated while getting its type,
+but if the expression is of a variably modified type
+like a variable length array, then it will also be evaluated.
 
 =================================== Q3 end ====================================
 
@@ -31,7 +62,26 @@ with '=' signs and keep lines to a max of 80 chars long.
 ================================== Q4 start ===================================
 4.  What is offsetof? Is it a keyword, function, or macro? What does it do?
 
-/* your answer */
+`offsetof` is a macro defined in `<stddef.h>` as part of the C specification.
+Given a type and the name of a member field of that field,
+it returns (as a `size_t`) the offset of the member field
+from the start of the given type.
+
+It is normally implemented using a compiler builtin,
+like `__builtin_offsetof` in gcc,
+(because in C++ it must be due to operator overloading).
+
+In C, like in the linux kernel and when the builtin is not available,
+it can also be implemented as
+```C
+#define offsetof(type, member) ((size_t) &((type *) 0)->member)
+```
+which basically takes a null pointer to the type,
+takes a pointer to the member field,
+and then converts it to a `size_t`,
+which since the original pointer was a null pointer, 0,
+is the distance between the start of the type
+and the start of the member field.
 
 =================================== Q4 end ====================================
 
@@ -39,7 +89,18 @@ with '=' signs and keep lines to a max of 80 chars long.
 ================================== Q5 start ===================================
 5.  What does the container_of() macro do?
 
-/* your answer */
+The `container_of` macro allows you to retrieve a pointer to the containing
+struct (container) of a given member field, given a pointer to the member field,
+the name of the member field, and the containing type.  It does this by
+calculating the offset of the member field from the start of the container
+(using `offsetof`) and then subtracting that offset (in bytes) from the pointer,
+and then casting that pointer to a pointer to the container type.
+This is super useful for implementing intrusive linked lists,
+where the linked list head (or multiple) is embedded in the container,
+because it allows you to retrieve the container entry for a list element
+from just the list head, which itself doesn't contain the container.
+It is unsafe, though, (like an unchecked cast) because you have to statically
+know that the correct container type is behind the list head pointer.
 
 =================================== Q5 end ====================================
 
@@ -49,7 +110,39 @@ with '=' signs and keep lines to a max of 80 chars long.
     portable across C compilers because it uses GNU-specific language
     extensions. Can you identify what they are?
 
-/* your answer */
+There seems to be a couple of versions of `container_of` in the linux kernel.
+They do the same things, but are implemented slightly differently.
+
+For example, there is this one in `scripts/kconfig/list.h:19-21`
+and `tools/include/linux/kernel.h:34-36`:
+```c
+#define container_of(ptr, type, member) ({                      \
+	const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+	(type *)( (char *)__mptr - offsetof(type,member) );})
+```
+
+And this one in `include/linux/kernel.h:851-856`:
+```c
+#define container_of(ptr, type, member) ({				\
+	void *__mptr = (void *)(ptr);					\
+	BUILD_BUG_ON_MSG(!__same_type(*(ptr), ((type *)0)->member) &&	\
+			 !__same_type(*(ptr), void),			\
+			 "pointer type mismatch in container_of()");	\
+	((type *)(__mptr - offsetof(type, member))); })
+```
+
+The latter one is the one used when I compile my module,
+so I will refer to that one in this answer and other answers
+that refer to `container_of`.  The former version, though, uses `typeof`,
+which is a GNU extension (described in Q3).
+
+In the latter version, the GNU extension used is statement expressions.
+By surrounding a block in parentheses, it turns into an expression evaluating
+to the last statement in the block.  This is similar to features in
+other languages like Rust, where the last statement (without a semicolon)
+are the value of the block.  This is very useful for running code in macros
+safely within a block while still evaluating to an expression,
+which lets you execute multiple statements or run a loop or similar things.
 
 =================================== Q6 end ====================================
 
@@ -59,6 +152,12 @@ with '=' signs and keep lines to a max of 80 chars long.
     __mptr) really necessary? Is it possible to rewrite the macro without it?
     What is the purpose of that 1st line?
 
-/* your answer */
+Both versions of `container_of` contain the `__mptr` declaration.
+The former is the one with two lines, though that one is not the main one
+in `include/linux/kernel.h`.  The main one is also two lines if you ignore
+the type-checking second line containing the `BUILD_BUG_ON_MSG` macro.
+They both use `__mptr` similarly, though.
+
+
 
 =================================== Q7 end ====================================
