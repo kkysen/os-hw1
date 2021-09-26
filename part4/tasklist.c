@@ -7,7 +7,7 @@ void print_process(const struct task_struct *const process, const u32 level)
 	const bool is_root = level == 0;
 	/* don't indent too far, and don't put an arrow on root/init */
 	const char *const arrow = is_root ? "" : " \\_ ";
-	const u32 indents = min(is_root ? 0 : level - 1, (u32)20);
+	const u32 indents = min(is_root ? 0 : level - 1, 20u);
 	const u32 num_spaces = indents * 4;
 	printk(KERN_INFO "%*s%s[%d] %s\n", num_spaces, "", arrow, process->pid,
 	       process->comm);

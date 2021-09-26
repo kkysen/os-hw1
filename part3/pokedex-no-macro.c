@@ -23,7 +23,7 @@ struct pokemon {
 	struct list_head list;
 };
 
-const size_t offset = (size_t) & ((struct pokemon *)NULL)->list;
+static const size_t offset = (size_t) & ((struct pokemon *)NULL)->list;
 
 void print_pokemon(struct pokemon *p)
 {
